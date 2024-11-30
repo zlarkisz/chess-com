@@ -1,4 +1,4 @@
-import { ref } from "vue";
+import { ref, computed } from "vue";
 import type { Ref } from 'vue';
 
 interface ISquare {
@@ -10,10 +10,24 @@ interface ISquare {
 const clickedSquares: Ref<ISquare[]> = ref([]);
 
 export function useChessboard() {
-  function handleSquareClick(row: number, col: number): void {
-    const square = { row, col, order: clickedSquares.value.length + 1 };
+  const highlightedSquaresSet = ref(new Set<string>());
 
-    if (!clickedSquares.value.some((s) => s.row === row && s.col === col)) {
+  const highlightedSquares = computed({
+    get: () => highlightedSquaresSet.value,
+
+    set: (squareKey: string) => {
+      highlightedSquaresSet.value.add(squareKey);
+    },
+  });
+
+  function handleSquareClick(row: number, col: number): void {
+    const squareKey = `${row}-${col}`;
+
+    if (!highlightedSquares.value.has(squareKey)) {
+      highlightedSquares.value.add(squareKey);
+
+      const square = { row, col, order: clickedSquares.value.length + 1 };
+
       clickedSquares.value.push(square);
     }
   }
@@ -28,6 +42,7 @@ export function useChessboard() {
 
   return {
     clickedSquares,
+    highlightedSquares,
     handleSquareClick,
     getSquareOrder
   };
